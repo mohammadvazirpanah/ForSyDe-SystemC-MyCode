@@ -1758,8 +1758,8 @@ public:
      * zips them together and writes the results using the output port
      */
     zipU(const sc_module_name& _name,
-        gamma_functype& _gamma_func_a,
-        gamma_functype& _gamma_func_b
+        const gamma_functype& _gamma_func_a,
+        const gamma_functype& _gamma_func_b
         ) : ut_process(_name), iport1("iport1"), iport2("iport2"), controlport("controlport"), oport1("oport1"),
         _gamma_func_a(_gamma_func_a), _gamma_func_b(_gamma_func_b) 
     { }
@@ -1784,8 +1784,8 @@ private:
     void prep()
     {
         control_tkn = controlport.read();
-        unsigned int c1 = gamma_func_a(control_tkn);
-        unsigned int c2 = gamma_func_b(control_tkn);
+        unsigned int c1 = _gamma_func_a(control_tkn);
+        unsigned int c2 = _gamma_func_b(control_tkn);
         
         i1vals.resize(c1);
         i2vals.resize(c2);
