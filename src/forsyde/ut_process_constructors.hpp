@@ -1741,16 +1741,16 @@ private:
 #endif
 };
 
-template <class T1, class T2, class CS>
+template <class T1, class T2, class TCS>
 class zipU : public ut_process
 {
 public:
     UT_in<T1> iport1;        ///< port for the input channel 1
     UT_in<T2> iport2;        ///< port for the input channel 2
-    UT_in<CS> controlport;   ///< port for the control signal   
+    UT_in<TCS> controlport;   ///< port for the control signal   
     UT_out<std::tuple<std::vector<T1>,std::vector<T2>>> oport1;///< port for the output channel
 
-    typedef std::function<unsigned int(const CS&)> gamma_functype;
+    typedef std::function<unsigned int(const TCS&)> gamma_functype;
 
 
     //! The constructor requires the module name
@@ -1774,7 +1774,7 @@ private:
     // intermediate values
     std::vector<T1> i1vals;
     std::vector<T2> i2vals;
-    CS control_tkn; 
+    TCS control_tkn; 
 
     void init()
     {
