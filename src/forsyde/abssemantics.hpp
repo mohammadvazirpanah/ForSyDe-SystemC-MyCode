@@ -329,6 +329,124 @@ public:
     
 };
 
+
+
+class sa_process : public sc_module
+{
+private:
+    //! 
+
+
+    SC_HAS_PROCESS(sa_process);
+
+    //! The main and only execution thread of the module
+    void worker()
+    {
+        //  We run the init stage here and not in the constructor to
+        // force running it after the elaboration phase.
+        init();
+        while (1)
+        {
+            prep();     // The preparaion stage
+            exec();     // The execution stage
+            prod();     // The production stage
+            meta();    // The meta operation stage
+        }
+    }
+
+protected:
+    //! The init stage
+    /*! This stage is executed once in the beginning and is responsible
+     * for initialization tasks such as allocating IO buffers, etc.
+     */
+    virtual void init() = 0;
+    
+    //! The prep stage
+    /*! This stage is executed continuously in a loop and is responsible
+     * for preparaing the inputs to the execution phase.
+     */
+    virtual void prep() = 0;
+    
+    //! The exece stage
+    /*! This stage is executed continuously in a loop and executes the
+     * main functionality of the process (e.g., by applying a supplied
+     * function).
+     */
+    virtual void exec() = 0;
+    
+    //! The prod stage
+    /*! This stage is executed continuously in a loop and is responsible
+     * for writing the computed results to the output.
+     */
+    virtual void prod() = 0;
+
+    //! The meta operation stage
+    /*! This stage is executed continuously in a loop and is responsible
+     * for performing meta operations on the inputs and outputs.
+     */
+    virtual void meta() = 0;
+
+    //! The clean stage
+    /*! This stage is executed once at the end and is responsible for
+     * cleaning jobs such as deallocation of the allocated memories, etc.
+     */
+
+
+    virtual void clean() = 0;
+    
+    //! This hook is used to run the clean stage
+    void end_of_simulation()
+    {
+        clean();
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+
+    //! This hook is used to collect additional structural information
+    void end_of_elaboration()
+    {
+        bindInfo();
+    }
+
+    //! This method is called during end_of_elaboration to gather binded channels information
+    /*! This function should save the pointers to all of the channels
+     * objects bound to the input and output channels in boundInChans
+     * and boundOutChans respectively
+     */
+    virtual void bindInfo() = 0;
+#endif
+
+public:
+
+
+#ifdef FORSYDE_INTROSPECTION
+    //! Pointers to the input ports and their bound channels
+    std::vector<PortInfo> boundInChans;
+    //! Pointers to the output ports and their bound channels
+    std::vector<PortInfo> boundOutChans;
+    
+    //! Vector holding a list of argument/value tuples passed to the process constructor
+    std::vector<std::tuple<std::string,std::string>> arg_vec;
+#endif
+ 
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * processes them and writes the results using the output port.
+     */
+    typedef std::function<bool(void*)> functype_goal; // function type for goal function to be passed to the constructor 
+    functype_goal func_goal;
+
+    sa_process(sc_module_name _name, ///< The name of the ForSyDe process
+            const functype_goal &func_goal=0 ///< The goal function to be passed to the constructor (default: 0)
+            ): sc_module(_name), func_goal (func_goal)
+    {
+        SC_THREAD(worker);
+    }
+    
+    //! The ForSyDe process type represented by the current module
+    virtual std::string forsyde_kind() const = 0;
+    
+};
 }
 
 #endif
