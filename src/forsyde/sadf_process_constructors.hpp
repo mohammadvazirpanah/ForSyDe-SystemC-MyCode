@@ -22,91 +22,74 @@ namespace SADF
 
 using namespace sc_core;
 
-// template <class IT, class ST, class OT>
-// class detector2 : public sadf_process
-// {
-// public:
+template <class IT, class OT>
+class detector2 : public sadf_process
+{
+public:
 
-//     SADF_in<IT> iport1;
-//     SADF_out<OT> oport1;
-//     SADF_out<OT> oport2;
+    SADF_in<IT> iport1;
+    SADF_out<std::tuple<OT,OT>> oport1;
 
-//     typedef std::function<void(ST&, const ST&, const std::tuple<IT,IT>&)> ns_functype;
 
-//     typedef std::function<void(std::tuple<IT,IT>&, const ST&, const std::tuple<IT,IT>&)> od_functype;
 
-//     detector2(const sc_module_name& _name,
-//             const ns_functype& _ns_func,
-//             const od_functype& _od_func,
-//             const ST& init_st  
-//           ) : sadf_process(_name), _ns_func(_ns_func), _od_func(_od_func), 
-//           init_st (init_st)
-//     {
-// #ifdef FORSYDE_INTROSPECTION
+    detector2(const sc_module_name& _name
+          ) : sadf_process(_name)
 
-// #endif
-//     }
+{
+
+#ifdef FORSYDE_INTROSPECTION
+
+#endif
+}
     
-//     //! Specifying from which process constructor is the module built
-//     std::string forsyde_kind() const{return "SADF::detector2";}
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "SADF::detector2";}
     
-// private:
+private:
    
-//     ns_functype _ns_func;
-//     od_functype _od_func;
+    IT ival;
+    std::tuple<OT,OT> ovals;
 
-//     ST init_st;
-
-//     std::tuple<IT,IT> ivals;
-//     ST* stval;
-//     ST* nsval;
-//     std::tuple<OT,OT> oval1;
-//     std::tuple<OT,OT> oval2;
-
-//     void init()
-//     {
-//         stval = new ST;
-//         *stval = init_st;
-//         nsval = new ST;
-//     }
+    void init()
+    {
+        std::cout<<"init"<<std::endl;
+    }
     
-//     void prep()
-//     {
-//         ivals = iport1.read();
-//     }
+    void prep()
+    {
+
+        // ival = iport1.read();
+
+    }
     
-//     void exec()
-//     {
-//         _ns_func(*nsval, *stval, ivals);
-//         _od_func(oval1, *stval, ivals);
-//         _od_func(oval2, *stval, ivals);
-//     }
+    void exec()
+    {
+
+    }
     
-//     void prod()
-//     {
-
-
-//     }
+    void prod()
+    {
+        ovals = std::make_tuple(1,2); //send scenario to kernel
+        WRITE_MULTIPORT (oport1, ovals);
+    }
     
-//     void clean()
-//     {
-//         delete stval;
-//         delete nsval;
-//     }
-// #ifdef FORSYDE_INTROSPECTION
-//     void bindInfo()
-//     {
-//         boundInChans.resize(1);     // only one input port
-//         boundInChans[0].port = &iport1;
-//         boundOutChans.resize(1);    // only one output port
-//         boundOutChans[0].port = &oport1;
-//     }
-// #endif
-// };
+    void clean()
+    {
+    }
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
 
 
 
-template <class TI, class TO>
+template <class TI, class TCT, class TO>
 
 class kernel : public sadf_process
 {
@@ -115,13 +98,13 @@ public:
     typedef enum {SCENARIO_1, SCENARIO_2} scenario_type ;
 
     SADF_in<TI> iport1;
-    SADF_in <scenario_type> control_port; 
+    SADF_in <TCT> control_port; 
     SADF_out<TO> oport1;
 
 
     typedef std::function<void
                               (std::vector<TO>&, 
-                               const scenario_type&, 
+                               const TCT&, 
                                const std::vector<TI>&)
                                > kernel_functype;
 
@@ -192,6 +175,72 @@ private:
 };
 
 
+template <class T>
+class sink : public sadf_process
+{
+public:
+    SADF_in<T> iport1;         ///< port for the input channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(const T&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which runs the user-imlpemented function
+     * in each cycle.
+     */
+    sink(sc_module_name _name,      ///< process name
+         functype _func             ///< function to be passed
+        ) : sadf_process(_name), iport1("iport1"), _func(_func)
+            
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+        arg_vec.push_back(std::make_tuple("i1toks", std::to_string(1)));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SADF::sink";}
+    
+private:
+    T* val;         // The current state of the process
+
+    //! The function passed to the process constructor
+    functype _func;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        val = new T;
+    }
+    
+    void prep()
+    {
+        *val = iport1.read();
+    }
+    
+    void exec()
+    {
+        _func(*val);
+    }
+    
+    void prod() {}
+    
+    void clean()
+    {
+        delete val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);    // only one output port
+        boundInChans[0].port = &iport1;
+    }
+#endif
+};
 
 }
 }
