@@ -23,7 +23,72 @@ namespace SADF
 using namespace sc_core;
 
 
-template <class TI, class TR1, class TR2, class TS, class TO>
+template <class T>
+class constant : public sadf_process
+{
+public:
+    SADF_out<T> oport1;            ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which runs the user-imlpemented function
+     * and writes the result using the output port
+     */
+    constant(sc_module_name _name,      ///< The module name
+              T init_val,                ///< The constant output value
+              unsigned long long take=0 ///< number of tokens produced (0 for infinite)
+             ) : sadf_process(_name), oport1("oport1"),
+                 init_val(init_val), take(take)
+                 
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
+        arg_vec.push_back(std::make_tuple("take", std::to_string(take)));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SADF::constant";}
+    
+private:
+    T init_val;
+    unsigned long long take;    // Number of tokens produced
+    
+    unsigned long long tok_cnt;
+    bool infinite;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        if (take==0) infinite = true;
+        tok_cnt = 0;
+    }
+    
+    void prep() {}
+    
+    void exec() {}
+    
+    void prod()
+    {
+        if (tok_cnt++ < take || infinite)
+            WRITE_MULTIPORT(oport1, init_val)
+        else wait();
+    }
+    
+    void clean() {}
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+
+template <class TI, class TS, class TO>
 class detector12 : public sadf_process
 {
 public:
@@ -33,8 +98,8 @@ public:
     SADF_out<TO> oport2;   // output port
     
     //! Type of the decoding output rate function to be passed to the process constructor
-    typedef std::function<void(std::array<size_t,2>&,
-                                const TS&, const TR1&, const TR2& )> gamma_functype;
+    typedef std::function<void(std::tuple<size_t, size_t>&,
+                                const TS&)> gamma_functype;
     
     //! Type of the next-state function to be passed to the process constructor
     typedef std::function<void(TS&,
@@ -51,12 +116,12 @@ public:
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    detectorMN(const sc_module_name& _name,        ///< The module name
+    detector12(const sc_module_name& _name,        ///< The module name
             const gamma_functype& _gamma_func,  ///< The partitioning function
             const ns_functype& _ns_func,        ///< The next_state function
             const od_functype& _od_func,        ///< The output-decoding function
             const TS& init_st   ///< Initial state
-            ) : ut_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
+            ) : sadf_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
               _od_func(_od_func), init_st(init_st)
     {
 #ifdef FORSYDE_INTROSPECTION
@@ -79,50 +144,31 @@ private:
     gamma_functype _gamma_func;
     ns_functype _ns_func;
     od_functype _od_func;
-    // Initial value
-    std::tuple<TSs...> init_st;
-    // consumption rates
-    std::array<size_t, sizeof...(TOs)> otoks;
-    std::array<size_t, sizeof...(TIs)> itoks;
+    TS init_st;
+    std::tuple<size_t, size_t> out_rates;
     
     // Input, output, current state, and next state variables
-    std::tuple<std::vector<TOs>...>* ovals;
-    std::tuple<TSs...>* stvals;
-    std::tuple<TSs...>* nsvals;
-    std::tuple<std::vector<TIs>...>* ivals;
+    std::tuple<TO,TO>* ovals;
+    std::vector<TI>* ivals;
+    TS* stvals;
+    TS* nsvals;
 
     //Implementing the abstract semantics
     void init()
     {
-        ovals = new std::tuple<std::vector<TOs>...>;
-        stvals = new std::tuple<TSs...>;
+        ovals = new std::tuple<TO,TO>;
+        stvals = new TS;
         *stvals = init_st;
-        nsvals = new std::tuple<TSs...>;
-        ivals = new std::tuple<std::vector<TIs>...>;
+        nsvals = new TS;
+        ivals = new std::vector<TI>;
     }
     
     void prep()
     {
-        _gamma_func(itoks, *stvals);    // determine how many tokens to read
-        // Size the input buffers
-        std::apply([&](auto&... ival) {
-            std::apply([&](auto&... itok) {
-                (ival.resize(itok), ...);
-            }, itoks);
-        }, *ivals);
-        // Read the input tokens
-        std::apply([&](auto&... inport) {
-            std::apply([&](auto&... ival) {
-                (
-                    [&ival,&inport](){
-                        for (auto it=ival.begin();it!=ival.end();it++)
-                            *it = inport.read();
-                    }()
-                , ...);
-            }, *ivals);
-        }, iport);
+        _gamma_func(out_rates, *stvals);    // determine how many tokens to read
+        // *ivals = iport1.read();
     }
-    
+
     void exec()
     {
         _ns_func(*nsvals, *stvals, *ivals);
@@ -131,21 +177,20 @@ private:
     }
     
     void prod()
-    {
-        std::apply([&](auto&&... port){
-            std::apply([&](auto&&... val){
-                (write_vec_multiport(port, val), ...);
-                (val.clear(), ...);
-            }, *ovals);
-        }, oport);
+    {   
+        for (auto it=0; it<std::get<0>(out_rates); it++)
+            oport1.write(std::get<0>(*ovals));
+
+        for (auto it=0; it<std::get<1>(out_rates); it++)
+            oport2.write(std::get<1>(*ovals));
     }
     
     void clean()
     {
-        delete ivals;
         delete ovals;
         delete stvals;
         delete nsvals;
+        delete ivals;
     }
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
@@ -174,115 +219,114 @@ private:
 
 
 
-template <class TI, class TCT, class TO>
+// template <class TI, class TCT, class TO>
 
-class kernel : public sadf_process
-{
-public:
+// class kernel : public sadf_process
+// {
+// public:
 
-    // typedef enum {SCENARIO_1, SCENARIO_2} scenario_type ;
+//     // typedef enum {SCENARIO_1, SCENARIO_2} scenario_type ;
 
-    SADF_in<TI> iport1;
-    SADF_in <TCT> control_port; 
-    SADF_out<TO> oport1;
+//     SADF_in<TI> iport1;
+//     SADF_in <TCT> control_port; 
+//     SADF_out<TO> oport1;
 
 
-    typedef std::function<void(
-                               std::vector<TO>&, 
-                               const TCT&, 
-                               const std::tuple <size_t, size_t>&,
-                               const std::vector<TI>&
-                               )> kernel_functype;
+//     typedef std::function<void(
+//                                std::vector<TO>&, 
+//                                const TCT&, 
+//                                const std::tuple <size_t, size_t>&,
+//                                const std::vector<TI>&
+//                                )> kernel_functype;
                                
 
-    // typedef std::tuple<std::tuple<size_t,size_t>, std::tuple<size_t,size_t>> scenario_table;
 
-    typedef std::map<TCT,std::tupe<std::array<size_t,1>,std::array<size_t,1>>> scenario_table;
+//     // typedef std::map<TCT,std::tupe<std::array<size_t,1>,std::array<size_t,1>>> scenario_table;
 
-    kernel(const sc_module_name& _name,
-           const kernel_functype& _func,
-           const scenario_table& _scenarios,
-           const size_t& num_kernels
-          ) : sadf_process(_name), iport1("iport1"), control_port("control_port"), oport1("oport1"), _func(_func),
-                _scenarios(_scenarios), num_kernels(num_kernels)
-    {
-#ifdef FORSYDE_INTROSPECTION
+//     kernel(const sc_module_name& _name,
+//            const kernel_functype& _func,
+//            const scenario_table& _scenarios,
+//            const size_t& num_kernels
+//           ) : sadf_process(_name), iport1("iport1"), control_port("control_port"), oport1("oport1"), _func(_func),
+//                 _scenarios(_scenarios), num_kernels(num_kernels)
+//     {
+// #ifdef FORSYDE_INTROSPECTION
 
 
-#endif
-    }
+// #endif
+//     }
     
-    //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const{return "SADF::kernel";}
+//     //! Specifying from which process constructor is the module built
+//     std::string forsyde_kind() const{return "SADF::kernel";}
     
-private:
+// private:
    
-    kernel_functype _func;
-    scenario_table _scenarios;
-    size_t o1toks, i1toks;
-    size_t num_kernels;
+//     kernel_functype _func;
+//     scenario_table _scenarios;
+//     size_t o1toks, i1toks;
+//     size_t num_kernels;
 
-    std::vector<TO> o1vals;
-    std::vector<TI> i1vals;
-    // scenario_type scenario_val;
-    // scenario_type scenario_val;
-    TCT scenario_num;
-    size_t cons_rate;
-    size_t prod_rate;
-    std::tuple<size_t, size_t> cons_prod_rate;
-    void init()
-    {
+//     std::vector<TO> o1vals;
+//     std::vector<TI> i1vals;
+//     // scenario_type scenario_val;
+//     // scenario_type scenario_val;
+//     TCT scenario_num;
+//     size_t cons_rate;
+//     size_t prod_rate;
+//     std::tuple<size_t, size_t> cons_prod_rate;
+//     void init()
+//     {
 
-    }
+//     }
     
-    void prep()
-    {
-        scenario_num = control_port.read();
-        if (num_kernels == 1)
-        {
-            cons_rate = (std::get<0>(std::get<0>(_scenarios)));
-            prod_rate = (std::get<1>(std::get<0>(_scenarios)));      
-        }
-        else
-        {
-            cons_rate = (std::get<0>(std::get<1>(_scenarios)));
-            prod_rate = (std::get<1>(std::get<1>(_scenarios)));
-        }
+//     void prep()
+//     {
+//         scenario_num = control_port.read();
+//         if (num_kernels == 1)
+//         {
+//             cons_rate = (std::get<0>(std::get<0>(_scenarios)));
+//             prod_rate = (std::get<1>(std::get<0>(_scenarios)));      
+//         }
+//         else
+//         {
+//             cons_rate = (std::get<0>(std::get<1>(_scenarios)));
+//             prod_rate = (std::get<1>(std::get<1>(_scenarios)));
+//         }
 
-        i1vals.resize(cons_rate);
-        o1vals.resize(prod_rate);
+//         i1vals.resize(cons_rate);
+//         o1vals.resize(prod_rate);
         
-        for (auto it=i1vals.begin();it!=i1vals.end();it++)
-            *it = iport1.read();
-        cons_prod_rate = std::make_tuple(cons_rate, prod_rate);
-    }
+//         for (auto it=i1vals.begin();it!=i1vals.end();it++)
+//             *it = iport1.read();
+//         cons_prod_rate = std::make_tuple(cons_rate, prod_rate);
+//     }
     
-    void exec()
-    {
-        _func(o1vals, scenario_num, cons_prod_rate, i1vals); 
-    }
+//     void exec()
+//     {
+//         _func(o1vals, scenario_num, cons_prod_rate, i1vals); 
+//     }
     
-    void prod()
-    {
+//     void prod()
+//     {
 
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
-        o1vals.clear();
-    }
+//         WRITE_VEC_MULTIPORT(oport1, o1vals)
+//         o1vals.clear();
+//     }
     
-    void clean()
-    {
+//     void clean()
+//     {
 
-    }
-#ifdef FORSYDE_INTROSPECTION
-    void bindInfo()
-    {
-        boundInChans.resize(1);     // only one input port
-        boundInChans[0].port = &iport1;
-        boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport1;
-    }
-#endif
-};
+//     }
+// #ifdef FORSYDE_INTROSPECTION
+//     void bindInfo()
+//     {
+//         boundInChans.resize(1);     // only one input port
+//         boundInChans[0].port = &iport1;
+//         boundOutChans.resize(1);    // only one output port
+//         boundOutChans[0].port = &oport1;
+//     }
+// #endif
+// };
 
 
 template <class T>
