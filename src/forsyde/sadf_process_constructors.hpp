@@ -98,7 +98,7 @@ public:
     SADF_out<TO> oport2;   // output port
     
     //! Type of the decoding output rate function to be passed to the process constructor
-    typedef std::function<void(std::tuple<size_t, size_t>&,
+    typedef std::function<void(std::array<size_t,2>&, 
                                 const TS&)> gamma_functype;
     
     //! Type of the next-state function to be passed to the process constructor
@@ -107,7 +107,7 @@ public:
                                 const std::vector<TI>&)> ns_functype;
     
     //! Type of the output-decoding function to be passed to the process constructor
-    typedef std::function<void(std::tuple<TO,TO>&,
+    typedef std::function<void(std::array<TO,2>&,
                                 const TS&,
                                 const std::vector<TI>&)> od_functype;
     
@@ -120,9 +120,10 @@ public:
             const gamma_functype& _gamma_func,  ///< The partitioning function
             const ns_functype& _ns_func,        ///< The next_state function
             const od_functype& _od_func,        ///< The output-decoding function
-            const TS& init_st   ///< Initial state
+            const TS& init_st,                   ///< Initial state
+            const unsigned int& itoks       ///< consumption rate for the first input
             ) : sadf_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
-              _od_func(_od_func), init_st(init_st)
+              _od_func(_od_func), init_st(init_st), itoks(itoks)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -145,52 +146,56 @@ private:
     ns_functype _ns_func;
     od_functype _od_func;
     TS init_st;
-    std::tuple<size_t, size_t> out_rates;
+    unsigned int itoks;
+    std::array<size_t,2> out_rates;
     
     // Input, output, current state, and next state variables
-    std::tuple<TO,TO>* ovals;
-    std::vector<TI>* ivals;
+    std::array<TO,2> ovals;
+    std::vector<TI> ivals;
     TS* stvals;
     TS* nsvals;
 
     //Implementing the abstract semantics
     void init()
     {
-        ovals = new std::tuple<TO,TO>;
+
+        ivals.resize(itoks);
         stvals = new TS;
         *stvals = init_st;
         nsvals = new TS;
-        ivals = new std::vector<TI>;
     }
     
     void prep()
     {
-        _gamma_func(out_rates, *stvals);    // determine how many tokens to read
-        // *ivals = iport1.read();
+        for (auto it=ivals.begin();it!=ivals.end();it++)
+            *it = iport1.read();
+
+           // determine how many tokens to write in output ports
     }
 
     void exec()
     {
-        _ns_func(*nsvals, *stvals, *ivals);
-        _od_func(*ovals, *stvals, *ivals);
-        *stvals = *nsvals;
+        _ns_func(*nsvals, *stvals, ivals);
+        _od_func(ovals, *stvals, ivals);
+         _gamma_func(out_rates, *stvals);
+        // *stvals = *nsvals;
     }
     
     void prod()
     {   
-        for (auto it=0; it<std::get<0>(out_rates); it++)
-            oport1.write(std::get<0>(*ovals));
+        for (auto it=0; it<out_rates[0]; it++)
+            oport1.write(ovals[0]);
 
-        for (auto it=0; it<std::get<1>(out_rates); it++)
-            oport2.write(std::get<1>(*ovals));
+        for (auto it=0; it<out_rates[1]; it++)
+            oport2.write(ovals[1]);
     }
     
     void clean()
     {
-        delete ovals;
+        
         delete stvals;
         delete nsvals;
-        delete ivals;
+        
     }
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
