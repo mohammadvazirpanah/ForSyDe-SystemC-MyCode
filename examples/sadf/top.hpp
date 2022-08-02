@@ -108,22 +108,40 @@ SC_MODULE(top)
         constant1->oport1(form_constant);
 
 
-        auto detector12 = new SADF::detector12 <int, scenarios_state, scenarios_state> ("detector12",
-                                                        gamma_func_detector,
-                                                        next_state_func_detector,
-                                                        output_decode_func_detector,
-                                                        S1);
-        detector12-> iport1 (form_constant);
-        detector12-> oport1 (from_detector1);
-        detector12-> oport2 (from_detector2);
+        // auto detector12 = new SADF::detector12 <int, scenarios_state, scenarios_state> ("detector12",
+        //                                                 gamma_func_detector,
+        //                                                 next_state_func_detector,
+        //                                                 output_decode_func_detector,
+        //                                                 S1);
+        // detector12-> iport1 (form_constant);
+        // detector12-> oport1 (from_detector1);
+        // detector12-> oport2 (from_detector2);
 
-        auto kernel1 = new SADF::kernel <int, scenarios_state, int> ("kernel1",
-                                                                    func_kernel1,
-                                                                    table
-                                                                  );
-        kernel1-> iport1 (to_kernel1);
-        kernel1-> control_port (from_detector1);
-        kernel1-> oport1 (from_kernel1);
+        SADF::make_detector12 ("detector12"
+                                ,gamma_func_detector,
+                                next_state_func_detector,
+                                output_decode_func_detector,
+                                S1,
+                                from_detector1,
+                                from_detector2,
+                                form_constant);
+
+        // auto kernel1 = new SADF::kernel <int, scenarios_state, int> ("kernel1",
+        //                                                             func_kernel1,
+        //                                                             table
+        //                                                           );
+        // kernel1-> iport1 (to_kernel1);
+        // kernel1-> control_port (from_detector1);
+        // kernel1-> oport1 (from_kernel1);
+
+        SADF::make_kernel ("kernel1",
+                            func_kernel1,
+                            table,
+                            from_kernel1,
+                            to_kernel1,
+                            from_detector1
+                            );
+                            
 
         auto kernel2 = new SADF::kernel <int, scenarios_state, int> ("kernel2",
                                                                     func_kernel2,
