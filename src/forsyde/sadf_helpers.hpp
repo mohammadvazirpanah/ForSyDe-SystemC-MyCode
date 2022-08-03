@@ -102,7 +102,7 @@ inline detector12<IT,ST,OT>* make_detector12(const std::string& pName,
     const typename detector12<IT,ST,OT>::gamma_functype& _gamma_func,
     const typename detector12<IT,ST,OT>::ns_functype& _ns_func,
     const typename detector12<IT,ST,OT>::od_functype& _od_func,
-    const ST& init_st,
+    const std::array <ST,2>& init_st,
     const unsigned int& itoks,
     OI1f<OT>& outS1,
     OI2f<OT>& outS2,
@@ -133,16 +133,16 @@ template <typename IT, typename TST, typename OT,
            template <class> class I1If,
            template <class> class I2If,
            template <class> class OIf>
-inline kernel<IT,TST,OT>* make_kernel(const std::string& pName,
-    const typename kernel<IT,TST,OT>::kernel_functype& _func,
-    const typename kernel<IT,TST,OT>::scenario_table& _scenario_table,
+inline kernel21<IT,TST,OT>* make_kernel21(const std::string& pName,
+    const typename kernel21<IT,TST,OT>::kernel_functype& _func,
+    const typename kernel21<IT,TST,OT>::scenario_table& _scenario_table,
     OIf<OT>& outS1,
     I1If<IT>& inpS1,
     I2If<TST>& inpS2
     )
     
 {
-    auto p = new kernel<IT,TST,OT>(pName.c_str(), _func, _scenario_table);
+    auto p = new kernel21<IT,TST,OT>(pName.c_str(), _func, _scenario_table);
     
     (*p).iport1(inpS1);
     (*p).control_port(inpS2);

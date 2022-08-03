@@ -4,87 +4,113 @@ using namespace sc_core;
 using namespace ForSyDe;
 
 
-enum scenarios_state {S1,S2} ;
+enum scenarios_state {ADD, MINUS, MUL, DIV};
 typedef std::map<scenarios_state,std::tuple<std::array<size_t,1>,std::array<size_t,1>>> scenario_table;
 
 
-void next_state_func_detector(scenarios_state& next_state,
-                                const scenarios_state& current_state,
+void next_scenario_func_detector(std::array <scenarios_state,2>& next_scenario,
+                                const std::array <scenarios_state,2>& current_scenario,
                                 const std::vector<int>& inp)
 {
-    if (current_state == S1)
+    if (current_scenario[0] == ADD && current_scenario[1] == MUL)
     {
-        next_state = S2;
+        next_scenario[0] = MINUS;
+        next_scenario[1] = DIV;
+
     }
     else
     {
-        next_state = S1; 
-    }    
+        next_scenario[0] = ADD; 
+        next_scenario[1] = MUL; 
+    }  
 }
 
-void output_decode_func_detector(std::tuple<scenarios_state, scenarios_state>& out,
-                                const scenarios_state& current_state,
+void output_decode_func_detector(std::array<scenarios_state,2>& out,
+                                const std::array <scenarios_state,2>& current_scenario,
                                 const std::vector<int>& inp)
 {
-    if (current_state == S1)
+    
+    if (current_scenario[0] == ADD && current_scenario[1] == MUL)
     {
-        out = std::make_tuple(S1,S1);
+        out[0] = MINUS;
+        out[1] = DIV;
+
     }
     else
     {
-       out = std::make_tuple(S2,S2); 
+        out[0] = ADD; 
+        out[1] = MUL; 
     }    
 }
 
-void gamma_func_detector(std::tuple<size_t, size_t>& out_rates, const scenarios_state& SN)
+void gamma_func_detector(std::array<size_t,2>& out_rates, const std::array <scenarios_state,2>& scenario)
 {
-    if (SN == S1)
+    if (scenario[0] == ADD && scenario[1] == MUL)
     {
-        out_rates = std::make_tuple(1,2);
+        out_rates [0] = 1;
+        out_rates [1] = 1;
     }
-    else if (SN == S2)
+    else if (scenario[0] == ADD && scenario[1] == DIV)
     {
-        out_rates = std::make_tuple(2,3);
+        out_rates [0] = 1;
+        out_rates [1] = 1;
     }
+    else if (scenario[0] == MINUS && scenario[1] == MUL)
+    {
+        out_rates [0] = 1;
+        out_rates [1] = 1;
+    }
+    else if (scenario[0] == MINUS && scenario[1] == DIV)
+    {
+        out_rates [0] = 1;
+        out_rates [1] = 1;
+    }
+   
 
 }
 
 void func_kernel1(std::vector<int>& out, 
-                               const scenarios_state& SS, 
+                               const scenarios_state& _scenarios_state, 
                                scenario_table& table,
                                const std::vector<int>& inp)
 {
-    std::cout << table << std::endl;
-    if (SS == S1)
+    if (_scenarios_state == ADD)
     {
-        out.resize(std::get<1>(table[S1])[0]);
-        out[0] = inp[0];
+        out.resize(std::get<1>(table[ADD])[0]);
+        out[0] = inp[0] + inp[1] + inp[2];
+        std::cout<<"inpADD="<<inp<<std::endl;
+        std::cout<<"outADD="<<out<<std::endl;
     }
 
-    else if (SS == S2)
+    else if (_scenarios_state == MINUS)
     {
-        out.resize(std::get<1>(table[S2])[0]);
-        out[0] = inp[0];
+        out.resize(std::get<1>(table[MINUS])[0]);
+        out[0] = inp[1]- inp[0];
+        std::cout<<"inpMinus="<<inp<<std::endl;
+        std::cout<<"outMinus="<<out<<std::endl;
     }
 }
 
 
 void func_kernel2(std::vector<int>& out, 
-                               const scenarios_state& SS, 
+                               const scenarios_state& _scenarios_state, 
                                scenario_table& table,
                                const std::vector<int>& inp)
 {
-    std::cout << table << std::endl;
-    if (SS == S1)
+    if (_scenarios_state == MUL)
     {
-        out.resize(std::get<1>(table[S1])[0]);
-        out[0] = inp[0];
+        out.resize(std::get<1>(table[MUL])[0]);
+        out[0] = inp[0] * inp[1];
+        std::cout<<"inpMUL="<<inp<<std::endl;
+        std::cout<<"outMUL="<<out<<std::endl;
     }
 
-    else if (SS == S2)
+    else if (_scenarios_state == DIV)
     {
-        out.resize(std::get<1>(table[S2])[0]);
-        out[0] = inp[0];
+        out.resize(std::get<1>(table[DIV])[0]);
+        out[0] = inp[0] / inp[1];
+        std::cout<<"inpDIV="<<inp<<std::endl;
+        std::cout<<"outDIV="<<out<<std::endl;
     }
 }
 
@@ -93,30 +119,34 @@ SC_MODULE(top)
 {
     scenario_table table = 
     {  
-        {S1, std::make_tuple(std::array<size_t,1>{1},std::array<size_t,1>{1})},
-        {S2, std::make_tuple(std::array<size_t,1>{1},std::array<size_t,1>{1})}
+        {ADD, std::make_tuple(std::array<size_t,1>{3},std::array<size_t,1>{1})},
+        {MINUS, std::make_tuple(std::array<size_t,1>{2},std::array<size_t,1>{1})},
+        {MUL, std::make_tuple(std::array<size_t,1>{2},std::array<size_t,1>{1})},
+        {DIV, std::make_tuple(std::array<size_t,1>{2},std::array<size_t,1>{1})}
     };
 
     SADF::signal<scenarios_state> from_detector1, from_detector2 ; 
-    SADF::signal<int> form_constant;
+    SADF::signal<int> from_constant;
     SADF::signal <int> to_kernel1, from_kernel1, to_kernel2, from_kernel2;
 
  
     SC_CTOR(top)
     {       
 
-        SADF::make_constant ("constant1", 1, 0, form_constant);
+        SADF::make_constant ("constant1", 1, 0, from_constant);
 
-        SADF::make_detector12 ("detector12"
-                        ,gamma_func_detector,
-                        next_state_func_detector,
+        SADF::make_detector12 ("detector12",
+                        gamma_func_detector,
+                        next_scenario_func_detector,
                         output_decode_func_detector,
-                        S1,
+                        std::array<scenarios_state,2>{ADD, MUL},
+                        1,
                         from_detector1,
                         from_detector2,
-                        form_constant);
+                        from_constant
+                        );
 
-        SADF::make_kernel ("kernel1",
+        SADF::make_kernel21 ("kernel1",
                             func_kernel1,
                             table,
                             from_kernel1,
@@ -124,7 +154,7 @@ SC_MODULE(top)
                             from_detector1
                             );
 
-        SADF::make_kernel ("kernel2",
+        SADF::make_kernel21 ("kernel2",
                             func_kernel2,
                             table,
                             from_kernel2,
@@ -132,10 +162,15 @@ SC_MODULE(top)
                             from_detector2
                             );
 
-        SADF::make_source ("source1", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 0, to_kernel1);
-        SADF::make_source ("source2", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 0, to_kernel2);
+        auto source1 = SADF::make_source ("source1", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 20, to_kernel1);
+        source1->oport1 (to_kernel2);
+        
         SADF::make_sink ("sink1", [] (const int& out) {std::cout <<"kernel1 = " <<out << std::endl;}, from_kernel1);
         SADF::make_sink ("sink2", [] (const int& out) {std::cout <<"kernel2 = " <<out << std::endl;}, from_kernel2);
+
+        // SADF::make_source ("source1", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 10, to_kernel1);
+        // SADF::make_source ("source2", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 10, to_kernel2);
+
 
 
         // auto constant1 = new SADF::constant<int>("constant1", 1, 0);

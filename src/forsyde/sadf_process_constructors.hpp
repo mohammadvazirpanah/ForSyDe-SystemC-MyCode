@@ -99,16 +99,16 @@ public:
     
     //! Type of the decoding output rate function to be passed to the process constructor
     typedef std::function<void(std::array<size_t,2>&, 
-                                const TS&)> gamma_functype;
+                                const std::array <TS,2>&)> gamma_functype;
     
     //! Type of the next-state function to be passed to the process constructor
-    typedef std::function<void(TS&,
-                                const TS&,
+    typedef std::function<void(std::array <TS,2>&,
+                                const std::array <TS,2>&,
                                 const std::vector<TI>&)> ns_functype;
     
     //! Type of the output-decoding function to be passed to the process constructor
     typedef std::function<void(std::array<TO,2>&,
-                                const TS&,
+                                const std::array <TS,2>&,
                                 const std::vector<TI>&)> od_functype;
     
     //! The constructor requires the module name
@@ -120,7 +120,7 @@ public:
             const gamma_functype& _gamma_func,  ///< The partitioning function
             const ns_functype& _ns_func,        ///< The next_state function
             const od_functype& _od_func,        ///< The output-decoding function
-            const TS& init_st,                   ///< Initial state
+            const std::array <TS,2>& init_st,                   ///< Initial state
             const unsigned int& itoks       ///< consumption rate for the first input
             ) : sadf_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
               _od_func(_od_func), init_st(init_st), itoks(itoks)
@@ -145,24 +145,24 @@ private:
     gamma_functype _gamma_func;
     ns_functype _ns_func;
     od_functype _od_func;
-    TS init_st;
+    std::array <TS,2> init_st;
     unsigned int itoks;
     std::array<size_t,2> out_rates;
     
     // Input, output, current state, and next state variables
     std::array<TO,2> ovals;
     std::vector<TI> ivals;
-    TS* stvals;
-    TS* nsvals;
+    std::array <TS,2>* stvals;
+    std::array <TS,2>* nsvals;
 
     //Implementing the abstract semantics
     void init()
     {
 
         ivals.resize(itoks);
-        stvals = new TS;
+        stvals = new std::array <TS,2>;
         *stvals = init_st;
-        nsvals = new TS;
+        nsvals = new std::array <TS,2>;
     }
     
     void prep()
@@ -170,7 +170,6 @@ private:
         for (auto it=ivals.begin();it!=ivals.end();it++)
             *it = iport1.read();
 
-           // determine how many tokens to write in output ports
     }
 
     void exec()
@@ -178,7 +177,7 @@ private:
         _ns_func(*nsvals, *stvals, ivals);
         _od_func(ovals, *stvals, ivals);
          _gamma_func(out_rates, *stvals);
-        // *stvals = *nsvals;
+        *stvals = *nsvals;
     }
     
     void prod()
@@ -226,7 +225,7 @@ private:
 
 template <class TI, class TCT, class TO>
 
-class kernel : public sadf_process
+class kernel21 : public sadf_process
 {
 public:
 
@@ -245,7 +244,7 @@ public:
                                )> kernel_functype;
                                
 
-    kernel(const sc_module_name& _name,
+    kernel21(const sc_module_name& _name,
            const kernel_functype& _func,
            const scenario_table& _scenario_table
           ) : sadf_process(_name), iport1("iport1"), control_port("control_port"), oport1("oport1"), _func(_func),
@@ -283,12 +282,18 @@ private:
 
         cons_rate = std::get<0>(_scenario_table[cntl_port])[0];
         prod_rate = std::get<1>(_scenario_table[cntl_port])[0];
-     
+        // std::cout << "cons_rate: " << cons_rate << std::endl;
+        // std::cout << "prod_rate: " << prod_rate << std::endl;
         i1vals.resize(cons_rate);
         o1vals.resize(prod_rate);
         
         for (auto it=i1vals.begin();it!=i1vals.end();it++)
+        {
             *it = iport1.read();
+            std::cout<<"i1vals: "<<*it<<std::endl;
+        }
+            
+
     }
     
     void exec()
