@@ -1,3 +1,15 @@
+/************************************************************************           
+    * sadf_helpers.hpp -- Helper primitives in the SADF MoC             *
+    *                                                                   *
+    * Author:                                                           *
+    *                                                                   *
+    * Purpose: Providing helper primitives for modeling in the SADF MoC *
+    *                                                                   *
+    * Usage:   This file is included automatically                      *
+    *                                                                   *
+    * License:                                                          *
+    *********************************************************************/
+
 #ifndef SADF_HELPERS_HPP
 #define SADF_HELPERS_HPP
 
@@ -42,7 +54,6 @@ inline constant<T>* make_constant(std::string pName,
     
     return p;
 }
-
 
 //! Helper function to construct a source process
 /*! This function is used to construct a source (SystemC module) and
@@ -93,14 +104,12 @@ inline sink<T>* make_sink(std::string pName,
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input FIFOs.
  */
-
 template <typename IT, typename ST, typename OT,
            template <class> class IIf,
            template <class> class OI1f,
            template <class> class OI2f>
 inline detector12<IT,ST,OT>* make_detector12(const std::string& pName,
     const typename detector12<IT,ST,OT>::gamma_functype& _gamma_func,
-    // const typename detector12<IT,ST,OT>::ns_functype& _ns_func,
     const typename detector12<IT,ST,OT>::od_functype& _od_func,
     const ST& init_st,
     const unsigned int& itoks,
@@ -119,8 +128,6 @@ inline detector12<IT,ST,OT>* make_detector12(const std::string& pName,
     return p;
 }
 
-
-
 //! Helper function to construct a kernel process
 /*! This function is used to construct a kernel (SystemC module) and
  * connect its output and output signals.
@@ -128,7 +135,6 @@ inline detector12<IT,ST,OT>* make_detector12(const std::string& pName,
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input FIFOs.
  */
-
 template <typename IT, typename TST, typename OT,
            template <class> class I1If,
            template <class> class I2If,
