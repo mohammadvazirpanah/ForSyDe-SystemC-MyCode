@@ -71,7 +71,8 @@ public:
     std::string forsyde_kind() const {return "SADF::constant";}
     
 private:
-    
+
+    // The current state
     T init_val;
 
     // Number of tokens produced
@@ -184,21 +185,32 @@ private:
     
     void prep()
     {
+        //! Reading the input port according to the input tokens consumption rate which is passed to the constructor
         for (auto it=ivals.begin();it!=ivals.end();it++)
             *it = iport1.read();
     }
 
     void exec()
     {
-         _gamma_func(out_rates, *stvals);
+        //! Applying the output rate function to the current state
+        _gamma_func(out_rates, *stvals);
+
+        /*! Applying the output-decoding function to the current state and the input tokens.
+        *   The output-decoding function is user-implemented function which is passed to the constructor 
+        *   to determine scenario for each output port (control token for sending to the kernel)
+        */
         _od_func(ovals, *stvals, ivals);
     }
     
     void prod()
     {   
+        //! Writing the output port according to the output token production rates which is detemined by the gamma function
+
+        //! Writing the output port 1
         for (auto it=0; it<out_rates[0]; it++)
             oport1.write(ovals[0]);
 
+        //! Writing the output port 2
         for (auto it=0; it<out_rates[1]; it++)
             oport2.write(ovals[1]);
     }
@@ -222,7 +234,6 @@ private:
 };
 
 //! Process constructor for a kernel process with two inputs and one output
-//! 
 /*! This class is used to build kernel processes with two inputs (control and data) and one output.
  * The class is parameterized for inputs, output and control signals
  * data-types.
@@ -453,10 +464,15 @@ public:
     std::string forsyde_kind() const {return "UT::source";}
     
 private:
-    T init_st;        // The current state
-    unsigned long long take;    // Number of tokens produced
-    
-    T* cur_st;        // The current state of the process
+    // The current state
+    T init_st;   
+
+    // Number of tokens produced     
+    unsigned long long take;   
+
+    // The current state of the process
+    T* cur_st;       
+
     unsigned long long tok_cnt;
     bool infinite;
     
