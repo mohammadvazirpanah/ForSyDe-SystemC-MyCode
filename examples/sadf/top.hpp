@@ -86,7 +86,7 @@ void gamma_func_detector(std::array<size_t,2>& out_rates, const scenarios_state_
 //         next_scenario = S1;
 //     }
 
-}
+// }
 
 void func_kernel1(std::vector<int>& out, 
                                const scenario_state_kernel& _scenarios_state, 
