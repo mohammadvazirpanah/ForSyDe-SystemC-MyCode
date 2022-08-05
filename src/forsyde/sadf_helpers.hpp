@@ -100,7 +100,6 @@ template <typename IT, typename ST, typename OT,
            template <class> class OI2f>
 inline detector12<IT,ST,OT>* make_detector12(const std::string& pName,
     const typename detector12<IT,ST,OT>::gamma_functype& _gamma_func,
-    const typename detector12<IT,ST,OT>::ns_functype& _ns_func,
     const typename detector12<IT,ST,OT>::od_functype& _od_func,
     const std::array <ST,2>& init_st,
     const unsigned int& itoks,
@@ -109,7 +108,7 @@ inline detector12<IT,ST,OT>* make_detector12(const std::string& pName,
     IIf<IT>& inpS
     )
 {
-    auto p = new detector12<IT,ST,OT>(pName.c_str(), _gamma_func, _ns_func, _od_func, init_st, itoks);
+    auto p = new detector12<IT,ST,OT>(pName.c_str(), _gamma_func, _od_func, init_st, itoks);
     
     (*p).iport1(inpS);
     (*p).oport1(outS1);

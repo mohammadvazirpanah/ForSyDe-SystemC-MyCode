@@ -4,63 +4,58 @@ using namespace sc_core;
 using namespace ForSyDe;
 
 
-enum scenarios_state {ADD, MINUS, MUL, DIV};
-typedef std::map<scenarios_state,std::tuple<std::array<size_t,1>,std::array<size_t,1>>> scenario_table;
+enum scenarios_state_detector {S1 ,S2, S3, S4};
+enum scenario_state_kernel {ADD, MINUS, MUL, DIV};
+
+typedef std::map<scenario_state_kernel,std::tuple<std::array<size_t,1>,std::array<size_t,1>>> scenario_table;
 
 
-void next_scenario_func_detector(std::array <scenarios_state,2>& next_scenario,
-                                const std::array <scenarios_state,2>& current_scenario,
-                                const std::vector<int>& inp)
-{
-    if (current_scenario[0] == ADD && current_scenario[1] == MUL)
-    {
-        next_scenario[0] = MINUS;
-        next_scenario[1] = DIV;
-
-    }
-    else
-    {
-        next_scenario[0] = ADD; 
-        next_scenario[1] = MUL; 
-    }  
-}
-
-void output_decode_func_detector(std::array<scenarios_state,2>& out,
-                                const std::array <scenarios_state,2>& current_scenario,
+void output_decode_func_detector(std::array <scenario_state_kernel,2>& out,
+                                const scenarios_state_detector& current_scenario,
                                 const std::vector<int>& inp)
 {
     
-    if (current_scenario[0] == ADD && current_scenario[1] == MUL)
+    if (current_scenario == S1 )
     {
         out[0] = MINUS;
         out[1] = DIV;
 
     }
-    else
+    else if (current_scenario == S2)
     {
-        out[0] = ADD; 
-        out[1] = MUL; 
-    }    
+        out[0] = ADD;
+        out[1] = MUL;
+    }
+    else if (current_scenario == S3)
+    {
+        out[0] = ADD;
+        out[1] = DIV;
+    }
+    else if (current_scenario == S4)
+    {
+        out[0] = MINUS;
+        out[1] = MUL;
+    } 
 }
 
-void gamma_func_detector(std::array<size_t,2>& out_rates, const std::array <scenarios_state,2>& scenario)
+void gamma_func_detector(std::array<size_t,2>& out_rates, const scenarios_state_detector& scenario)
 {
-    if (scenario[0] == ADD && scenario[1] == MUL)
+    if (scenario==S1)
     {
         out_rates [0] = 1;
         out_rates [1] = 1;
     }
-    else if (scenario[0] == ADD && scenario[1] == DIV)
+    else if (scenario==S2)
     {
         out_rates [0] = 1;
         out_rates [1] = 1;
     }
-    else if (scenario[0] == MINUS && scenario[1] == MUL)
+    else if (scenario==S3)
     {
         out_rates [0] = 1;
         out_rates [1] = 1;
     }
-    else if (scenario[0] == MINUS && scenario[1] == DIV)
+    else if (scenario==S4)
     {
         out_rates [0] = 1;
         out_rates [1] = 1;
@@ -70,7 +65,7 @@ void gamma_func_detector(std::array<size_t,2>& out_rates, const std::array <scen
 }
 
 void func_kernel1(std::vector<int>& out, 
-                               const scenarios_state& _scenarios_state, 
+                               const scenario_state_kernel& _scenarios_state, 
                                scenario_table& table,
                                const std::vector<int>& inp)
 {
@@ -93,7 +88,7 @@ void func_kernel1(std::vector<int>& out,
 
 
 void func_kernel2(std::vector<int>& out, 
-                               const scenarios_state& _scenarios_state, 
+                               const scenario_state_kernel& _scenarios_state, 
                                scenario_table& table,
                                const std::vector<int>& inp)
 {
@@ -125,7 +120,7 @@ SC_MODULE(top)
         {DIV, std::make_tuple(std::array<size_t,1>{2},std::array<size_t,1>{1})}
     };
 
-    SADF::signal<scenarios_state> from_detector1, from_detector2 ; 
+    SADF::signal<scenario_state_kernel> from_detector1, from_detector2; 
     SADF::signal<int> from_constant;
     SADF::signal <int> to_kernel1, from_kernel1, to_kernel2, from_kernel2;
 
@@ -137,9 +132,8 @@ SC_MODULE(top)
 
         SADF::make_detector12 ("detector12",
                         gamma_func_detector,
-                        next_scenario_func_detector,
                         output_decode_func_detector,
-                        std::array<scenarios_state,2>{ADD, MUL},
+                        S1,
                         1,
                         from_detector1,
                         from_detector2,
