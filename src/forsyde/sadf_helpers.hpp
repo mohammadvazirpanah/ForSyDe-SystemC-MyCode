@@ -100,6 +100,7 @@ template <typename IT, typename ST, typename OT,
            template <class> class OI2f>
 inline detector12<IT,ST,OT>* make_detector12(const std::string& pName,
     const typename detector12<IT,ST,OT>::gamma_functype& _gamma_func,
+    // const typename detector12<IT,ST,OT>::ns_functype& _ns_func,
     const typename detector12<IT,ST,OT>::od_functype& _od_func,
     const ST& init_st,
     const unsigned int& itoks,

@@ -174,9 +174,10 @@ private:
 
     void exec()
     {
-        // _ns_func(*nsvals, *stvals, ivals);
+
          _gamma_func(out_rates, *stvals);
         _od_func(ovals, *stvals, ivals);
+        // _ns_func(*nsvals, *stvals, ivals);
     }
     
     void prod()
@@ -254,7 +255,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const{return "SADF::kernel";}
+    std::string forsyde_kind() const{return "SADF::kernel21";}
     
 private:
    

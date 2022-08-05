@@ -15,16 +15,15 @@ void output_decode_func_detector(std::array <scenario_state_kernel,2>& out,
                                 const std::vector<int>& inp)
 {
     
-    if (current_scenario == S1 )
-    {
-        out[0] = MINUS;
-        out[1] = DIV;
-
-    }
-    else if (current_scenario == S2)
+    if (current_scenario == S1)
     {
         out[0] = ADD;
         out[1] = MUL;
+    }
+    else if (current_scenario == S2)
+    {
+        out[0] = MINUS;
+        out[1] = DIV;
     }
     else if (current_scenario == S3)
     {
@@ -61,6 +60,31 @@ void gamma_func_detector(std::array<size_t,2>& out_rates, const scenarios_state_
         out_rates [1] = 1;
     }
    
+
+}
+
+
+// void next_scenario_detector (scenarios_state_detector& next_scenario, 
+//                             const scenarios_state_detector& current_scenario, 
+//                             const std::vector<int>& inp)
+// {
+
+//     if (current_scenario == S1)
+//     {
+//         next_scenario = S2;
+//     }
+//     else if (current_scenario == S2)
+//     {
+//         next_scenario = S3;
+//     }
+//     else if (current_scenario == S3)
+//     {
+//         next_scenario = S4;
+//     }
+//     else if (current_scenario == S4)
+//     {
+//         next_scenario = S1;
+//     }
 
 }
 
@@ -121,14 +145,16 @@ SC_MODULE(top)
     };
 
     SADF::signal<scenario_state_kernel> from_detector1, from_detector2; 
-    SADF::signal<int> from_constant;
+    SADF::signal<int> from_constant, from_source;
     SADF::signal <int> to_kernel1, from_kernel1, to_kernel2, from_kernel2;
 
  
     SC_CTOR(top)
     {       
 
-        SADF::make_constant ("constant1", 1, 0, from_constant);
+        // SADF::make_constant ("constant1", 1, 0, from_constant);
+
+        SADF::make_source ("sourced", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 4, from_source);
 
         SADF::make_detector12 ("detector12",
                         gamma_func_detector,
@@ -137,7 +163,7 @@ SC_MODULE(top)
                         1,
                         from_detector1,
                         from_detector2,
-                        from_constant
+                        from_source
                         );
 
         SADF::make_kernel21 ("kernel1",
