@@ -206,11 +206,11 @@ private:
     {   
         //! Writing the output port according to the output token production rates which is detemined by the gamma function
 
-        //! Writing the output port 1
+        //! Writing the output port 1 (associated with one control token)
         for (auto it=0; it<out_rates[0]; it++)
             oport1.write(ovals[0]);
 
-        //! Writing the output port 2
+        //! Writing the output port 2 (associated with one control token)
         for (auto it=0; it<out_rates[1]; it++)
             oport2.write(ovals[1]);
     }
@@ -297,7 +297,7 @@ private:
     //! The table of kernel's scenarios to be passed to the process constructor
     scenario_table _scenario_table;
 
-    //! Consumption, production rates and input-output variables
+    //! Consumption, production rates and input-output tokens variables
     size_t o1toks, i1toks;
     size_t cons_rate;
     size_t prod_rate;
@@ -310,10 +310,11 @@ private:
     
     void prep()
     {
-        //! Reading the control port which is connected to the detector
+        //! Reading the control port which is connected to the detector to determine the scenario for the kernel
         cntl_port = control_port.read();
         
-        //! Set the consumption and production rates from the kernel's scenario table which is passed to the process constructor
+        //! Set the consumption and production rates from the kernel's scenario table (table passed to the process constructor)
+        //! first element of the tuple is use for the consumption rate, second element is the production rate
         cons_rate = std::get<0>(_scenario_table[cntl_port])[0];
         prod_rate = std::get<1>(_scenario_table[cntl_port])[0];
 
@@ -321,12 +322,10 @@ private:
         i1vals.resize(cons_rate);
         o1vals.resize(prod_rate);
         
-        //! Reading the input port according to the consumption rate which is define in previous line
+        //! Reading the input port (iport1) according to the consumption rate (cons_rate)
         for (auto it=i1vals.begin();it!=i1vals.end();it++)
-        {
             *it = iport1.read();
-            std::cout<<"i1vals: "<<*it<<std::endl;
-        }
+        
     }
     
     void exec()
