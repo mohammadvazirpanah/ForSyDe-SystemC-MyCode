@@ -179,7 +179,7 @@ private:
     std::tuple<TO1,TO2> ovals;
     std::vector<TI> ivals;
     TS* csvals; 
-    TS* psvals; 
+    TS* nsvals; 
     TS init_sc;
     unsigned int itoks;
 
@@ -190,8 +190,8 @@ private:
         ivals.resize(itoks);
         
         csvals = new TS;
-        psvals = new TS;
-        *csvals = init_sc;
+        nsvals = new TS;
+        *nsvals = init_sc;
     }
     
     void prep()
@@ -203,6 +203,8 @@ private:
 
     void exec()
     {
+          //! Update the current scenario
+        *csvals = *nsvals;
 
         //! Applying the output rate function to the current scenario to get the output rates for each output port
         _gamma_func(out_rates, *csvals);
@@ -213,11 +215,8 @@ private:
         */
         _od_func(ovals, *csvals, ivals);
 
-        //! Update the previous scenario for next round
-        *psvals = *csvals;
-
         //! Applying the next scenario function to to the previous scenario and input tokens to get the next scenario for next round
-        _ns_func (*csvals, *psvals, ivals);
+        _ns_func (*nsvals, *csvals, ivals);
     }
     
     void prod()
@@ -237,7 +236,7 @@ private:
     void clean()
     {
         delete csvals;        
-        delete psvals;
+        delete nsvals;
     }
 
 #ifdef FORSYDE_INTROSPECTION

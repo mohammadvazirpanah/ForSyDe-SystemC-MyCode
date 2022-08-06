@@ -45,25 +45,25 @@ void gamma_func_detector(std::array<size_t,2>& out_rates,
 
 }
 
-void current_scenario_func_detector (scenarios_state_detector& current_scenario, 
-                                    const scenarios_state_detector& previous_scenario, 
+void next_scenario_func_detector (scenarios_state_detector& next_scenario, 
+                                    const scenarios_state_detector& current_scenario, 
                                     const std::vector<int>& inp)
 {
-    if (previous_scenario == S1)
+    if (current_scenario == S1)
     {
-        current_scenario = S2;
+        next_scenario = S2;
     }
-    else if (previous_scenario == S2)
+    else if (current_scenario == S2)
     {
-        current_scenario = S3;
+        next_scenario = S3;
     }
-    else if (previous_scenario == S3)
+    else if (current_scenario == S3)
     {
-        current_scenario = S4;
+        next_scenario = S4;
     }
-    else if (previous_scenario == S4)
+    else if (current_scenario == S4)
     {
-        current_scenario = S1;
+        next_scenario = S1;
     }
 }
 

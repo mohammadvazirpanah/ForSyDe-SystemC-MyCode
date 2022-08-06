@@ -21,7 +21,7 @@ SC_MODULE(top)
 
         SADF::make_detector12 ("detector12",
                                 gamma_func_detector,
-                                current_scenario_func_detector,
+                                next_scenario_func_detector,
                                 output_decode_func_detector,
                                 S1,
                                 1,
