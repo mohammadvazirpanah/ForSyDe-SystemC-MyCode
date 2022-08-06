@@ -253,6 +253,172 @@ private:
 #endif
 };
 
+template<typename TO_tuple, typename TI_tuple, typename TS> class detectorMN;
+
+template <typename... TOs, typename... TIs, typename TSs>
+class detectorMN<std::tuple<TOs...>,std::tuple<TIs...>, TSs>: public sadf_process
+{
+public:
+    std::tuple<SADF_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<SADF_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the decoding output rate function for each output port to be passed to the process constructor
+    typedef std::function<void(std::array<size_t, sizeof...(TOs)>&,
+                                const TSs&)> gamma_functype;
+    
+    //! Type of the next-state function to be passed to the process constructor
+    typedef std::function<void(TSs&,
+                                const TSs&,
+                                const std::tuple<std::vector<TIs>...>&)> ns_functype;
+    
+    //! Type of the output-decoding function to be passed to the process constructor
+    typedef std::function<void(std::tuple<TOs...>&,
+                                const TSs&,
+                                const std::tuple<std::vector<TIs>...>&)> od_functype;
+    
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented functions to the input and current
+     * state and writes the results using the output port
+     */
+    detectorMN(const sc_module_name& _name,         ///< The module name
+            const gamma_functype& _gamma_func,      ///< The partitioning function
+            const ns_functype& _ns_func,            ///< The next_state function
+            const od_functype& _od_func,            ///< The output-decoding function
+            const TSs& init_st,                     ///< Initial state
+            const unsigned int& itoks               ///< consumption rate for the first input
+            ) : sadf_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
+              _od_func(_od_func), init_st(init_st), itoks(itoks)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_gamma_func",func_name+std::string("_gamma_func")));
+        arg_vec.push_back(std::make_tuple("_ns_func",func_name+std::string("_ns_func")));
+        arg_vec.push_back(std::make_tuple("_od_func",func_name+std::string("_od_func")));
+        std::stringstream ss;
+        ss << init_st;
+        arg_vec.push_back(std::make_tuple("init_st",ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "SADF::detectorMN";}
+    
+private:
+    //! The functions passed to the process constructor
+    gamma_functype _gamma_func;
+    ns_functype _ns_func;
+    od_functype _od_func;
+
+
+
+    std::array<size_t, sizeof...(TOs)> out_rates;
+
+    
+    // Input, output, current state, and next state variables
+    std::tuple<TOs...>* ovals;
+    TSs* csvals; 
+    TSs* psvals; 
+    TSs init_st;
+    std::tuple<std::vector<TIs>...>* ivals;
+    unsigned int itoks;
+
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        ovals = new std::tuple<TOs...>;
+        csvals = new TSs;
+        *csvals = init_st;
+        psvals = new TSs;
+        ivals = new std::tuple<std::vector<TIs>...>;
+    }
+    
+    void prep()
+    {
+
+        // std::apply([&](auto&... ival) {
+        //     std::apply([&](auto&... itok) {
+        //         (ival.resize(itok), ...);
+        //     }, itoks);
+        // }, *ivals);
+
+        
+        // Read the input tokens
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, *ivals);
+        }, iport);
+    }
+    
+    
+    void exec()
+    {
+        _gamma_func(out_rates, *csvals);
+        _od_func(*ovals, *csvals, *ivals);
+        *psvals = *csvals;
+        _ns_func (*csvals, *psvals, *ivals);
+    }
+    
+    void prod()
+    {
+        // std::apply([&](auto&&... port){
+        //     std::apply([&](auto&&... val){
+        //         std::apply([&](auto&&... out_rate){
+        //             for (auto it=0; it<out_rates; it++){
+        //                 (write_vec_multiport(port, val), ...);
+        //                 (val.clear(), ...);}
+        //         }, out_rates);
+        //     }, *ovals);
+        // }, oport);
+
+        // std::apply([&](auto&&... port){
+        //     std::apply([&](auto&&... val){
+        //         (WRITE_VEC_MULTIPORT(port, val), ...);
+        //         (val.clear(), ...);
+        //     }, *ovals);
+        // }, oport);
+    }
+    
+    void clean()
+    {
+        delete ivals;
+        delete ovals;
+        delete csvals;
+        delete psvals;
+    }
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
+    }
+#endif
+};
+
 //! Process constructor for a kernel process with two inputs and one output
 /*! This class is used to build kernel processes with two inputs (control and data) and one output.
  * The class is parameterized for inputs, output and control signals
