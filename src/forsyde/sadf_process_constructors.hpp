@@ -147,10 +147,10 @@ public:
             const gamma_functype& _gamma_func,      ///< The output rate function for each output port
             const cs_functype& _ns_func,            ///< The next scenario function
             const od_functype& _od_func,            ///< The output-decoding function
-            const TS& init_st,                      ///< Initial scenario
+            const TS& init_sc,                      ///< Initial scenario
             const unsigned int& itoks               ///< consumption rate for the first input
             ) : sadf_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
-              _od_func(_od_func), init_st(init_st), itoks(itoks)
+              _od_func(_od_func), init_sc(init_sc), itoks(itoks)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -159,8 +159,8 @@ public:
         arg_vec.push_back(std::make_tuple("_ns_func",func_name+std::string("_ns_func")));
         arg_vec.push_back(std::make_tuple("_od_func",func_name+std::string("_od_func")));
         std::stringstream ss;
-        ss << init_st;
-        arg_vec.push_back(std::make_tuple("init_st",ss.str()));
+        ss << init_sc;
+        arg_vec.push_back(std::make_tuple("init_sc",ss.str()));
         arg_vec.push_back(std::make_tuple("itoks",std::to_string(itoks)));
 #endif
     }
@@ -180,7 +180,7 @@ private:
     std::vector<TI> ivals;
     TS* csvals; 
     TS* psvals; 
-    TS init_st;
+    TS init_sc;
     unsigned int itoks;
 
     //Implementing the abstract semantics
@@ -191,7 +191,7 @@ private:
         
         csvals = new TS;
         psvals = new TS;
-        *csvals = init_st;
+        *csvals = init_sc;
     }
     
     void prep()

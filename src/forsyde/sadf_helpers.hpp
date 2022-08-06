@@ -112,14 +112,14 @@ inline detector12<IT,TS,OT1,OT2>* make_detector12(const std::string& pName,
     const typename detector12<IT,TS,OT1,OT2>::gamma_functype& _gamma_func,
     const typename detector12<IT,TS,OT1,OT2>::cs_functype& _ns_func,
     const typename detector12<IT,TS,OT1,OT2>::od_functype& _od_func,
-    const TS& init_st,
+    const TS& init_sc,
     const unsigned int& itoks,
     OI1f<OT1>& outS1,
     OI2f<OT2>& outS2,
     IIf<IT>& inpS
     )
 {
-    auto p = new detector12<IT,TS,OT1,OT2>(pName.c_str(), _gamma_func, _ns_func, _od_func, init_st, itoks);
+    auto p = new detector12<IT,TS,OT1,OT2>(pName.c_str(), _gamma_func, _ns_func, _od_func, init_sc, itoks);
     
     (*p).iport1(inpS);
     (*p).oport1(outS1);
