@@ -178,8 +178,8 @@ private:
     std::array<size_t,2> out_rates;
     std::tuple<TO1,TO2> ovals;
     std::vector<TI> ivals;
-    TS* stvals; 
-    TS* ptvals; 
+    TS* csvals; 
+    TS* psvals; 
     TS init_st;
     unsigned int itoks;
 
@@ -189,9 +189,9 @@ private:
         // Initialize the initial scenario and the resize the input vector
         ivals.resize(itoks);
         
-        stvals = new TS;
-        ptvals = new TS;
-        *stvals = init_st;
+        csvals = new TS;
+        psvals = new TS;
+        *csvals = init_st;
     }
     
     void prep()
@@ -205,19 +205,19 @@ private:
     {
 
         //! Applying the output rate function to the current scenario to get the output rates for each output port
-        _gamma_func(out_rates, *stvals);
+        _gamma_func(out_rates, *csvals);
 
         /*! Applying the output-decoding function to the current scenario and the input tokens.
         *   The output-decoding function is user-implemented function which is passed to the constructor 
         *   to determine scenario for each output port (control token for sending to the kernel)
         */
-        _od_func(ovals, *stvals, ivals);
+        _od_func(ovals, *csvals, ivals);
 
         //! Update the previous scenario for next round
-        *ptvals = *stvals;
+        *psvals = *csvals;
 
         //! Applying the next scenario function to to the previous scenario and input tokens to get the next scenario for next round
-        _ns_func (*stvals, *ptvals, ivals);
+        _ns_func (*csvals, *psvals, ivals);
     }
     
     void prod()
@@ -236,8 +236,8 @@ private:
     
     void clean()
     {
-        delete stvals;        
-        delete ptvals;
+        delete csvals;        
+        delete psvals;
     }
 
 #ifdef FORSYDE_INTROSPECTION
