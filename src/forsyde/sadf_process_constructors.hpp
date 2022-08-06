@@ -128,10 +128,10 @@ public:
     typedef std::function<void(std::array<size_t,2>&, 
                                 const TS&)> gamma_functype;
 
-    //! Type of the current scenario function to be passed to the process constructor
+    //! Type of the next scenario function to be passed to the process constructor
     typedef std::function<void(TS&,
                               const TS&,
-                              const std::vector<TI>&)> cs_functype;
+                              const std::vector<TI>&)> ns_functype;
                               
     //! Type of the output-decoding function to be passed to the process constructor
     typedef std::function<void(std::tuple<TO1,TO2>&,
@@ -145,7 +145,7 @@ public:
      */
     detector12(const sc_module_name& _name,         ///< The module name
             const gamma_functype& _gamma_func,      ///< The output rate function for each output port
-            const cs_functype& _ns_func,            ///< The next scenario function
+            const ns_functype& _ns_func,            ///< The next scenario function
             const od_functype& _od_func,            ///< The output-decoding function
             const TS& init_sc,                      ///< Initial scenario
             const unsigned int& itoks               ///< consumption rate for the first input
@@ -171,7 +171,7 @@ public:
 private:
     //! The functions passed to the process constructor
     gamma_functype _gamma_func;
-    cs_functype _ns_func;
+    ns_functype _ns_func;
     od_functype _od_func;
     
     // Input, output, current scenario, previous scenario and input tokens variables
