@@ -104,21 +104,22 @@ inline sink<T>* make_sink(std::string pName,
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input FIFOs.
  */
-template <typename IT, typename ST, typename OT,
+template <typename IT, typename TS, typename OT1, typename OT2,
            template <class> class IIf,
            template <class> class OI1f,
            template <class> class OI2f>
-inline detector12<IT,ST,OT>* make_detector12(const std::string& pName,
-    const typename detector12<IT,ST,OT>::gamma_functype& _gamma_func,
-    const typename detector12<IT,ST,OT>::od_functype& _od_func,
-    const ST& init_st,
+inline detector12<IT,TS,OT1,OT2>* make_detector12(const std::string& pName,
+    const typename detector12<IT,TS,OT1,OT2>::gamma_functype& _gamma_func,
+    const typename detector12<IT,TS,OT1,OT2>::cs_functype& _ns_func,
+    const typename detector12<IT,TS,OT1,OT2>::od_functype& _od_func,
+    const TS& init_st,
     const unsigned int& itoks,
-    OI1f<OT>& outS1,
-    OI2f<OT>& outS2,
+    OI1f<OT1>& outS1,
+    OI2f<OT2>& outS2,
     IIf<IT>& inpS
     )
 {
-    auto p = new detector12<IT,ST,OT>(pName.c_str(), _gamma_func, _od_func, init_st, itoks);
+    auto p = new detector12<IT,TS,OT1,OT2>(pName.c_str(), _gamma_func, _ns_func, _od_func, init_st, itoks);
     
     (*p).iport1(inpS);
     (*p).oport1(outS1);
