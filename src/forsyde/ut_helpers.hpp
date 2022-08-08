@@ -392,8 +392,8 @@ inline sink<T>* make_sink(const std::string& pName,
     return p;
 }
 
-//! Helper function to construct a zip process
-/*! This function is used to construct a zip process (SystemC module) and
+//! Helper function to construct a zips process
+/*! This function is used to construct a zips process (SystemC module) and
  * connect its output and output signals.
  * It provides a more functional style definition of a ForSyDe process.
  * It also removes bilerplate code by using type-inference feature of
@@ -402,7 +402,7 @@ inline sink<T>* make_sink(const std::string& pName,
 template <class T1, template <class> class I1If,
            class T2, template <class> class I2If,
            template <class> class OIf>
-inline zip<T1,T2>* make_zip(const std::string& pName,
+inline zips<T1,T2>* make_zips(const std::string& pName,
     const unsigned int& i1toks,
     const unsigned int& i2toks,
     OIf<std::tuple<std::vector<T1>,std::vector<T2>>>& outS,
@@ -410,7 +410,7 @@ inline zip<T1,T2>* make_zip(const std::string& pName,
     I2If<T2>& inp2S
     )
 {
-    auto p = new zip<T1,T2>(pName.c_str(), i1toks, i2toks);
+    auto p = new zips<T1,T2>(pName.c_str(), i1toks, i2toks);
     
     (*p).iport1(inp1S);
     (*p).iport2(inp2S);
@@ -496,28 +496,6 @@ inline fanout<T>* make_fanout(const std::string& pName,
     return p;
 }
 
-template <class T1, template <class> class I1If,
-           class T2, template <class> class I2If,
-           class TCS, template <class> class I3If,
-           template <class> class OIf>
-inline zipU<T1,T2,TCS>* make_zipU(const std::string& pName,
-    const typename zipU<T1,T2,TCS>::gamma_functype& _gamma_func_a,
-    const typename zipU<T1,T2,TCS>::gamma_functype& _gamma_func_b,
-    OIf<std::tuple<std::vector<T1>,std::vector<T2>>>& outS,
-    I1If<T1>& inp1S,
-    I2If<T2>& inp2S,
-    I3If<TCS>& inp3S
-    )
-{
-    auto p = new zipU<T1,T2,TCS>(pName.c_str(), _gamma_func_a, _gamma_func_b);
-    
-    (*p).iport1(inp1S);
-    (*p).iport2(inp2S);
-    (*p).controlport(inp3S);
-    (*p).oport1(outS);
-    
-    return p;
-}
 
 }
 }

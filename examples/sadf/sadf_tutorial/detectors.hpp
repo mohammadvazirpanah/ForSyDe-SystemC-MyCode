@@ -1,13 +1,13 @@
 /**********************************************************************
     * detectors.hpp -- Implementation of Detectors                    *
     *                                                                 *
-    * Author:                                                         *
+    * Author:  Mohammad Vazirpanah (mohammad.vazirpanah@yahoo.com)    *
     *                                                                 *
     * Purpose: Demonstration of a simple process.                     *
     *                                                                 *
-    * Usage:   detector21 and kernel21 tutorial example.              *
+    * Usage:   SADF Tutorial                                          *
     *                                                                 *
-    * License:                                                        *
+    * License: BSD3                                                   *
     *******************************************************************/
 
 #ifndef DETECTORS_HPP
@@ -18,78 +18,55 @@
 
 using namespace sc_core;
 using namespace ForSyDe;
+using namespace std;
 
-void gamma_func_detector(std::array<size_t,2>& out_rates, 
-                         const scenarios_state_detector& current_scenario)
+void detector1_cds_func(detector_scenario_type& new_scenario, 
+                        const detector_scenario_type& previous_scenario, 
+                        const std::vector<int>& inp)
 {
-    if (current_scenario == S1)
+    switch (previous_scenario)
     {
-        out_rates [0] = 1;
-        out_rates [1] = 1;
-    }
-    else if (current_scenario == S2)
-    {
-        out_rates [0] = 1;
-        out_rates [1] = 1;
-    }
-    else if (current_scenario == S3)
-    {
-        out_rates [0] = 1;
-        out_rates [1] = 1;
-    }
-    else if (current_scenario == S4)
-    {
-        out_rates [0] = 1;
-        out_rates [1] = 1;
-    }
-
-}
-
-void next_scenario_func_detector (scenarios_state_detector& next_scenario, 
-                                    const scenarios_state_detector& current_scenario, 
-                                    const std::vector<int>& inp)
-{
-    if (current_scenario == S1)
-    {
-        next_scenario = S2;
-    }
-    else if (current_scenario == S2)
-    {
-        next_scenario = S3;
-    }
-    else if (current_scenario == S3)
-    {
-        next_scenario = S4;
-    }
-    else if (current_scenario == S4)
-    {
-        next_scenario = S1;
+        case S1:
+            new_scenario = S2;
+            break;
+        case S2:
+            new_scenario = S3;
+            break;
+        case S3:
+            new_scenario = S4;
+            break;
+        case S4:
+            new_scenario = S1;
+            break;
     }
 }
 
 
-void output_decode_func_detector(std::tuple <scenario_state_kernel1, scenario_state_kernel2>& out,
-                                const scenarios_state_detector& current_scenario,
-                                const std::vector<int>& inp)
+void detector1_kss_func(std::tuple<vector<kernel1_scenario_type>,vector<kernel2_scenario_type>>& out,
+                        const detector_scenario_type& current_scenario,
+                        const std::vector<int>& inp)
 {
-    
-    if (current_scenario == S1)
+    get<0>(out).resize(1);
+    get<1>(out).resize(1);
+    switch (current_scenario)
     {
-        out = std::make_tuple(ADD, MUL);
+        case S1:
+            get<0>(out) = {ADD};
+            get<1>(out) = {MUL};
+            break;
+        case S2:
+            get<0>(out) = {MINUS};
+            get<1>(out) = {DIV};
+            break;
+        case S3:
+            get<0>(out) = {ADD};
+            get<1>(out) = {MUL};
+            break;
+        case S4:
+            get<0>(out) = {MINUS};
+            get<1>(out) = {DIV};
+            break;
     }
-    else if (current_scenario == S2)
-    {
-        out = std::make_tuple(MINUS, DIV);
-    }
-    else if (current_scenario == S3)
-    {
-        out = std::make_tuple(ADD, MUL);
-    }
-    else if (current_scenario == S4)
-    {
-        out = std::make_tuple(MINUS, DIV);
-    }
-
 }
 
 #endif

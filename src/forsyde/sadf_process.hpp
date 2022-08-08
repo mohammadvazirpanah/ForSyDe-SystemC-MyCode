@@ -1,7 +1,19 @@
+/**********************************************************************           
+    * sadf_process.hpp -- The SADF MoC process                        *
+    *                                                                 *
+    * Author:  Mohammad Vazirpanah (mohammad.vazirpanah@yahoo.com)    *
+    *                                                                 *
+    * Purpose: Providing the primitives for the SADF MoC              *
+    *                                                                 *
+    * Usage:   This file is included automatically                    *
+    *                                                                 *
+    * License: BSD3                                                   *
+    *******************************************************************/
+
 #ifndef SADF_PROCESS_HPP
 #define SADF_PROCESS_HPP
 
-/*! \file SADF_process.hpp
+/*! \file sadf_process.hpp
  * \brief Implements the abstract process in the SADF Model of Computation
  * 
  *  This files procides definitions for the signals, ports ans the
@@ -78,8 +90,8 @@ public:
 template <typename T>
 using out_port = SADF_out<T>;
 
-//! Abstract semantics of a process in the SADF MoC
-typedef ForSyDe::process sadf_process;
+//! Abstract semantics of a process in the SY MoC
+typedef ForSyDe::process SADF_process;
 
 }
 }

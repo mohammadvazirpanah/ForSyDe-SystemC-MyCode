@@ -1,13 +1,13 @@
 /**********************************************************************
-    * globals.hpp -- The Globals Definitions                          *
+    * globals.hpp -- The globals Definitions for the SADF tutorial    *
     *                                                                 *
-    * Author:                                                         *
+    * Author: Mohammad Vazirpanah (mohammad.vazirpanah@yahoo.com)     *
     *                                                                 *
     * Purpose: Demonstration of a simple process.                     *
     *                                                                 *
-    * Usage:   detector21 and kernel21 tutorial example.              *
+    * Usage:   SADF Tutorial                                          *
     *                                                                 *
-    * License:                                                        *
+    * License: BSD3                                                   *
     *******************************************************************/
 
 
@@ -18,25 +18,42 @@
 
 using namespace ForSyDe;
 
-enum scenarios_state_detector {S1 ,S2, S3, S4};
-enum scenario_state_kernel1 {ADD, MINUS};
-enum scenario_state_kernel2 {MUL, DIV};
+enum detector_scenario_type {S1 ,S2, S3, S4};
+enum kernel1_scenario_type {ADD, MINUS};
+enum kernel2_scenario_type {MUL, DIV};
 
+typedef std::map<
+            detector_scenario_type,
+            size_t
+        > detector_scenario_table_type;
 
-typedef std::map<scenario_state_kernel1,std::tuple<std::array<size_t,1>,std::array<size_t,1>>> scenario_table_kernel1;
-typedef std::map<scenario_state_kernel2,std::tuple<std::array<size_t,1>,std::array<size_t,1>>> scenario_table_kernel2;
+typedef std::map<
+            kernel1_scenario_type,
+            std::tuple<size_t,size_t>
+        > kernel1_scenario_table_type;
+typedef std::map<
+            kernel2_scenario_type,
+            std::tuple<size_t,size_t>
+        > kernel2_scenario_table_type;
 
+detector_scenario_table_type detector1_table = {
+    {S1, 1},
+    {S2, 1},
+    {S3, 1},
+    {S4, 1}
+};
 
-scenario_table_kernel1 table_kernel1 = 
+kernel1_scenario_table_type kernel1_table = 
 {  
-    {ADD, std::make_tuple(std::array<size_t,1>{3},std::array<size_t,1>{1})},
-    {MINUS, std::make_tuple(std::array<size_t,1>{2},std::array<size_t,1>{1})}
+    {ADD, std::make_tuple(3,1)},
+    {MINUS, std::make_tuple(2,1)}
 };
 
-scenario_table_kernel2 table_kernel2 =
+kernel2_scenario_table_type kernel2_table =
 {
-    {MUL, std::make_tuple(std::array<size_t,1>{2},std::array<size_t,1>{1})},
-    {DIV, std::make_tuple(std::array<size_t,1>{2},std::array<size_t,1>{1})}
+    {MUL, std::make_tuple(2,1)},
+    {DIV, std::make_tuple(2,1)}
 };
+
 
 #endif

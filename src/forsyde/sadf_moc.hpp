@@ -1,8 +1,21 @@
+/**********************************************************************           
+    * sadf_moc.hpp -- The scenario-aware dataflow model of computation*
+    *                                                                 *
+    * Author:  Mohammad Vazirpanah (mohammad.vazirpanah@yahoo.com)    *
+    *                                                                 *
+    * Purpose: Providing promitive element required for modeling      *
+    *          SADF systems in ForSyDe-SystemC                        *
+    *                                                                 *
+    * Usage:   This file is included automatically                    *
+    *                                                                 *
+    * License: BSD3                                                   *
+    *******************************************************************/
+
 #ifndef SADF_MOC_HPP
 #define SADF_MOC_HPP
 
 /*! \file sadf_moc.hpp
- * \brief Implements the Scenario Aware Data Flow (SADF) Model of Computation
+ * \brief Implements the Scenario-Aware Dataflow (SADF) Model of Computation
  * 
  *  This file includes the basic process constructors and other
  * facilities used for modeling in the SADF model of computation.
@@ -18,9 +31,9 @@
 namespace ForSyDe
 {
 
-//! The namespace for Scenario Aware Data Flow MoC
+//! The namespace for scenario-aware dataflow MoC
 /*! This namespace includes constructs used for building models in the
- * scenario aware data flow MoC.
+ * scenario-aware dataflow MoC.
  */
 namespace SADF
 {
