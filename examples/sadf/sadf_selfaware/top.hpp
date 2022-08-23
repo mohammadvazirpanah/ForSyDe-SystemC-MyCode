@@ -120,7 +120,7 @@ void sim_kss_func(tuple<system_scenario_type,
 
 void self_model_func(tuple<vector<int>>& out, 
                     const self_model_scenario_type& _scenarios_state, 
-                    const tuple<vector<int>>& inp)
+                    const tuple<vector<int>,vector<int>>& inp)
 {
 
 }
@@ -140,10 +140,17 @@ void out_abst_func(std::vector<int>& out,
 
 }
 
+void self_env_func(std::vector<int>& out,
+                     const env_scenario_type& _env_state,
+                     const std::vector<int>&inp)
+{
+
+}
+
 SC_MODULE(top)
 {
 
-    SADF::signal<int> to_enviroment, from_enviroment, to_system, from_system,  to_abstract, from_in_abst, from_out_abst, from_self_model, to_self_model, from_env_abst;
+    SADF::signal<int> to_enviroment, from_enviroment, to_system, from_system,  to_abstract, from_in_abst, from_out_abst, from_self_model, to_self_model, from_env_abst, from_constant;
     SADF::signal<system_scenario_type> sim_to_system;
     SADF::signal<inputabst_scenario_type> sim_to_in_abst;
     SADF::signal<outputabst_scenario_type> sim_to_out_abst;
@@ -155,7 +162,7 @@ SC_MODULE(top)
 
     SC_CTOR(top)
     {
-
+        SDF::make_constant ("constant", 1, 0, from_constant);
         auto environment = SDF::make_comb("enviroment",
                             enviroment_behavior,
                             1,
@@ -192,13 +199,14 @@ SC_MODULE(top)
                     from_system
                 );
 
-        auto self_model = new SADF::kernelMN<tuple<int>,self_model_scenario_type,tuple<int>>(
+        auto self_model = new SADF::kernelMN<tuple<int>,self_model_scenario_type,tuple<int,int>>(
                         "self_model1",
                         self_model_func,
                         self_model_table
                     );
         self_model->cport1(sim_to_self_model);
         get<0>(self_model->iport)(from_in_abst);
+        get<1>(self_model->iport)(from_in_abst);
         get<0>(self_model->oport)(from_self_model);
 
         SADF::make_kernel("self_env1",
@@ -227,7 +235,7 @@ SC_MODULE(top)
                                         {1}
                                     );
                         
-        get<0>(sim->iport)(from_source);
+        get<0>(sim->iport)(from_constant);
         get<0>(sim->oport)(sim_to_system);
         get<1>(sim->oport)(sim_to_in_abst);
         get<2>(sim->oport)(sim_to_out_abst);
