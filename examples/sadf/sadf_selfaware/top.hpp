@@ -81,10 +81,6 @@ env_scenario_table_type env_table =
 
 
 
-
-
-
-
 void enviroment_behavior (std::vector<int>& out, const std::vector<int>& inp)
 {
 
@@ -94,9 +90,8 @@ void system_behavior(std::vector<int>& out,
                      const system_scenario_type& _system_state,
                      const std::vector<int>&inp)
 {
-
+    
 }
-
 
 void sim_cds_func(sim_scenario_type& new_scenario, 
                         const sim_scenario_type& previous_scenario, 
