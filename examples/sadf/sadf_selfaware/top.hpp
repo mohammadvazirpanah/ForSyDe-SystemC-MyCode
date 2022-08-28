@@ -26,12 +26,12 @@ enum env_scenario_type {evn_resume, evn_stop};
 
 
 // !! ---------------------- Simulator ----------------------  !! // 
-typedef map<sim_scenario_type, array<size_t,2>> sim_scenario_table_type;
+typedef map<sim_scenario_type, array<size_t,5>> sim_scenario_table_type;
 
 
 sim_scenario_table_type sim_table = {
-    {S1, {1,1}},
-    {S2, {1,1}}
+    {S1, {1,1,1,1,1}},
+    {S2, {1,1,1,1,1}}
 };
 
 // !! ----------------------  System ----------------------  !! // 
@@ -62,12 +62,12 @@ outputabst_scenario_table_type outputabst_table =
 };
 
 // !! ---------------------- Self Model ----------------------  !! // 
-typedef std::map<self_model_scenario_type, std::tuple<size_t,size_t>> self_model_scenario_table_type;
+typedef map<self_model_scenario_type, tuple<array<size_t,2>,array<size_t,1>>> self_model_scenario_table_type;
 
 self_model_scenario_table_type self_model_table = 
 {  
-    {self_model_resume, std::make_tuple(1,1)},
-    {self_model_stop, std::make_tuple(0,0)}
+    {self_model_resume, make_tuple(array<size_t,2>{1,1},array<size_t,1>{1})},
+    {self_model_stop, make_tuple(array<size_t,2>{0,0},array<size_t,1>{0})}
 };
 
 // !! ----------------- Abstracted Environment ------------------  !! // 
@@ -83,7 +83,7 @@ env_scenario_table_type env_table =
 
 void enviroment_behavior (std::vector<int>& out, const std::vector<int>& inp)
 {
-
+    out[0] = inp [0]+1;
 }
 
 void system_behavior(std::vector<int>& out,
@@ -97,6 +97,16 @@ void sim_cds_func(sim_scenario_type& new_scenario,
                         const sim_scenario_type& previous_scenario, 
                         const tuple<vector<int>>& inp)
 {
+        switch (previous_scenario)
+    {
+        case S1:
+            new_scenario = S2;
+            break;
+        case S2:
+            new_scenario = S1;
+            break;
+
+    }
 
 }
 
@@ -109,7 +119,23 @@ void sim_kss_func(tuple<system_scenario_type,
                         const tuple<vector<int>>& inp)
 {
 
-
+    switch (current_scenario)
+    {
+        case S1:
+            out = make_tuple(sys_resume,
+                            inputabst_resume, 
+                            self_model_resume,
+                            outputabst_resume,
+                            evn_resume);
+            break;
+        case S2:
+            out = make_tuple(sys_stop,
+                            inputabst_stop,
+                            self_model_stop,
+                            outputabst_stop,
+                            evn_stop);
+            break;
+    }
 
 }
 
@@ -194,14 +220,19 @@ SC_MODULE(top)
                     from_system
                 );
 
-        auto self_model = new SADF::kernelMN<tuple<int>,self_model_scenario_type,tuple<int,int>>(
-                        "self_model1",
-                        self_model_func,
-                        self_model_table
-                    );
+        auto self_model = new SADF::kernelMN<
+                                                tuple<int>,
+                                                self_model_scenario_type,
+                                                tuple<int,int>
+                                            >
+                                            (
+                                                "self_model1",
+                                                self_model_func,
+                                                self_model_table
+                                            );
         self_model->cport1(sim_to_self_model);
         get<0>(self_model->iport)(from_in_abst);
-        get<1>(self_model->iport)(from_in_abst);
+        get<1>(self_model->iport)(from_env_abst);
         get<0>(self_model->oport)(from_self_model);
 
         SADF::make_kernel("self_env1",
@@ -233,11 +264,10 @@ SC_MODULE(top)
         get<0>(sim->iport)(from_constant);
         get<0>(sim->oport)(sim_to_system);
         get<1>(sim->oport)(sim_to_in_abst);
-        get<2>(sim->oport)(sim_to_out_abst);
-        get<3>(sim->oport)(sim_to_self_model);
+        get<2>(sim->oport)(sim_to_self_model);
+        get<3>(sim->oport)(sim_to_out_abst);
         get<4>(sim->oport)(sim_to_env_abst);
         
-
     }   
 
 
