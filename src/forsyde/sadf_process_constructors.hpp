@@ -329,7 +329,7 @@ public:
     
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "SADF::kernelMN";}
-private:
+protected:
     // Control, input and output variables
     std::tuple<std::vector<TOs>...> ovals;
     std::tuple<std::vector<TIs>...> ivals;
