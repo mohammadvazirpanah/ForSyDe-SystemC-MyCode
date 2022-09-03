@@ -36,21 +36,21 @@ system_scenario_table_type system_table =
 };
 
 // !! ----------------------  Input Abstraction ----------------------  !! // 
-typedef std::map<inputabst_scenario_type, std::tuple<size_t,size_t>> inputabst_scenario_table_type;
+typedef map<inputabst_scenario_type, tuple<size_t,size_t>> inputabst_scenario_table_type;
 
 inputabst_scenario_table_type inputabst_table = 
 {  
-    {inputabst_resume, std::make_tuple(1,1)},
-    {inputabst_stop, std::make_tuple(0,0)}
+    {inputabst_resume, make_tuple(1,1)},
+    {inputabst_stop, make_tuple(0,0)}
 };
 
 // !! ----------------------  Output Abstraction ----------------------  !! // 
-typedef std::map<outputabst_scenario_type, std::tuple<size_t,size_t>> outputabst_scenario_table_type;
+typedef map<outputabst_scenario_type, tuple<size_t,size_t>> outputabst_scenario_table_type;
 
 outputabst_scenario_table_type outputabst_table = 
 {  
-    {outputabst_resume, std::make_tuple(1,1)},
-    {outputabst_stop, std::make_tuple(0,0)}
+    {outputabst_resume, make_tuple(1,1)},
+    {outputabst_stop, make_tuple(0,0)}
 };
 
 // !! ---------------------- Self Model ----------------------  !! // 
@@ -63,33 +63,33 @@ self_model_scenario_table_type self_model_table =
 };
 
 // !! ----------------- Abstracted Environment ------------------  !! // 
-typedef std::map<env_scenario_type, std::tuple<size_t,size_t>> env_scenario_table_type;
+typedef map<env_scenario_type, tuple<size_t,size_t>> env_scenario_table_type;
 
 env_scenario_table_type env_table = 
 {  
-    {evn_resume, std::make_tuple(1,1)},
-    {evn_stop, std::make_tuple(0,0)}
+    {evn_resume, make_tuple(1,1)},
+    {evn_stop, make_tuple(0,0)}
 };
 
 
 
-void enviroment_behavior (std::vector<int>& out, const std::vector<int>& inp)
+void enviroment_behavior (vector<int>& out, const vector<int>& inp)
 {   
     out[0] = inp[0]*inp[0]; 
 }
 
-void system_goal(std::vector<bool>& goals)
+void system_goal(vector<bool>& goals)
 {
 
 }
 
-void self_model_goal (std::vector<bool>& goals)
+void self_model_goal (vector<bool>& goals)
 {
 
 }
-void system_behavior(std::tuple<std::vector<int>, std::vector<int>>& out,
+void system_behavior(tuple<vector<int>, vector<int>>& out,
                      const system_scenario_type& _system_state,
-                     const std::tuple<std::vector<int>> &inp)
+                     const tuple<vector<int>> &inp)
 {
 
 }
@@ -147,24 +147,24 @@ void self_model_func(tuple<vector<int>>& out,
 
 }
 
-void inp_abst_func(std::vector<int>& out,
+void inp_abst_func(vector<int>& out,
                      const inputabst_scenario_type& _inputabst_state,
-                     const std::vector<int>&inp)
+                     const vector<int>&inp)
 {
 
 }
 
 
-void out_abst_func(std::vector<int>& out,
+void out_abst_func(vector<int>& out,
                      const outputabst_scenario_type& _outputabst_state,
-                     const std::vector<int>&inp)
+                     const vector<int>&inp)
 {
 
 }
 
-void self_env_func(std::vector<int>& out,
+void self_env_func(vector<int>& out,
                      const env_scenario_type& _env_state,
-                     const std::vector<int>&inp)
+                     const vector<int>&inp)
 {
 
 }
