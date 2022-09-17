@@ -8,6 +8,7 @@ using namespace sc_core;
 using namespace ForSyDe;
 using namespace std;
 
+enum sim_type {start, stop};
 enum sim_scenario_type {S1 ,S2};
 enum system_scenario_type {sys_resume, sys_stop};
 enum inputabst_scenario_type {inputabst_resume, inputabst_stop};
@@ -75,7 +76,7 @@ env_scenario_table_type env_table =
 
 void enviroment_behavior (vector<int>& out, const vector<int>& inp)
 {   
-    out[0] = inp[0]*inp[0]; 
+    
 }
 
 void system_goal(vector<bool>& goals)
@@ -192,7 +193,7 @@ SC_MODULE(top)
         environment1->oport1 (from_enviroment);
         environment1->oport1 (to_system);
 
-        auto system1 = new SADF::system<
+        auto system1 = new SADF::SA<
                                         tuple<int,int>,
                                         system_scenario_type,
                                         tuple<int>
@@ -231,7 +232,7 @@ SC_MODULE(top)
         outputabst1->oport1(from_out_abst);
         
 
-        auto selfmodel = new SADF::system<
+        auto selfmodel = new SADF::SA<
                                         tuple<int>,
                                         self_model_scenario_type,
                                         tuple<int,int>
